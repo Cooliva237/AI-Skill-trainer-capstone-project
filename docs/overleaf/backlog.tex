@@ -1,0 +1,116 @@
+% Replace the template file named backlog.tex with this file.
+% main.tex already contains \include{backlog}. Do not paste this into main.tex,
+% and do not put \documentclass or \begin{document} in this file.
+
+\makeatletter
+\@ifundefined{rowcolor}{\RequirePackage{colortbl}}{}
+\makeatother
+
+\setlength{\tabcolsep}{2.5pt}
+\setlength{\arrayrulewidth}{0.8pt}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\LTleft}{0pt}
+\setlength{\LTright}{0pt}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+% Red and blue are only for work assigned to Sprint 1, 2, or 3.
+\newcommand{\backlogepic}[7]{%
+  \rowcolor{gray!12}%
+  \textbf{#1} & \textbf{#2} & \textbf{#3} & \textbf{#4} & \textbf{#5} & \textbf{#6} & \textbf{#7} \\
+  \hline
+}
+\newcommand{\backlogitem}[7]{#1 & #2 & #3 & #4 & #5 & #6 & #7 \\ \hline}
+\newcommand{\backlogdone}[7]{%
+  \rowcolor{red!35}%
+  #1 & #2 & #3 & #4 & #5 & #6 & #7 \\
+  \hline
+}
+\newcommand{\backloginprogress}[7]{%
+  \rowcolor{blue!25}%
+  #1 & #2 & #3 & #4 & #5 & #6 & #7 \\
+  \hline
+}
+
+\chapter{Project Backlog}
+\section{User Stories}
+
+\noindent This backlog represents the planned work for the first semester of the AI Skill Trainer senior capstone project. Development follows an Agile process using the sprint schedule defined by the course.
+
+\begin{singlespacing}
+\small
+\begin{longtable}{|P{\dimexpr0.07\textwidth-2\tabcolsep\relax}|P{\dimexpr0.36\textwidth-2\tabcolsep\relax}|P{\dimexpr0.07\textwidth-2\tabcolsep\relax}|P{\dimexpr0.10\textwidth-2\tabcolsep\relax}|P{\dimexpr0.10\textwidth-2\tabcolsep\relax}|P{\dimexpr0.11\textwidth-2\tabcolsep\relax}|P{\dimexpr0.13\textwidth-2\tabcolsep\relax}|}
+\hline
+\textbf{ID} & \textbf{Epic / User Story} & \textbf{Effort} & \textbf{Priority} & \textbf{Sprint} & \textbf{Owner} & \textbf{Status} \\
+\hline
+\endfirsthead
+
+\multicolumn{7}{|l|}{\small\textit{Project Backlog, continued}} \\
+\hline
+\textbf{ID} & \textbf{Epic / User Story} & \textbf{Effort} & \textbf{Priority} & \textbf{Sprint} & \textbf{Owner} & \textbf{Status} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\endlastfoot
+
+\backlogepic{E0}{Project Planning, Requirements \& Design}{}{High}{S1/S4}{Team}{In Progress}
+\backlogdone{T0.1}{Define the project vision, initial scope, team roles, and initial product backlog.}{2}{High}{S1}{Team}{Complete}
+\backloginprogress{T0.2}{Set up GitHub, branching strategy, project board, and team development workflow.}{3}{High}{S1}{Team}{In Progress}
+\backloginprogress{T0.3}{Complete and refine the project proposal and semester project plan.}{3}{High}{S2}{Team}{In Progress}
+\backlogitem{T0.4}{Define functional requirements and acceptance criteria for the core application.}{5}{High}{S3}{Toby}{Not Started}
+\backloginprogress{T0.5}{Complete a feasibility study for the web development stack, data storage, authentication, AI, and pose estimation.}{5}{High}{S3}{Carlos}{In Progress}
+\backlogitem{T0.6}{Create wireframes and user flows for login, home, skill tree, lessons, and progress screens.}{3}{High}{S3}{Turner}{Not Started}
+\backlogitem{T0.7}{Design the initial software architecture, data model, and major app components.}{5}{High}{S4}{Team}{Not Started}
+
+\backlogepic{E1}{User Accounts \& Core App Navigation}{}{High}{S4/S5}{Team}{Not Started}
+\backlogitem{U1.1}{As a user, I want to create an account so that my progress can be saved.}{3}{High}{S4}{}{Not Started}
+\backlogitem{U1.2}{As a user, I want to log in and log out so that I can securely access my account.}{3}{High}{S5}{}{Not Started}
+\backlogitem{U1.3}{As a user, I want the app to remember my login so that I do not need to sign in every time.}{3}{Medium}{S5}{}{Not Started}
+\backlogitem{U1.4}{As a user, I want clear navigation between the home screen, skill tree, lessons, and profile so that the app is easy to use.}{3}{High}{S4}{}{Not Started}
+\backlogitem{U1.5}{As a new user, I want to choose the skill I want to learn so that I can begin the appropriate skill tree.}{3}{High}{S5}{}{Not Started}
+
+\backlogepic{E2}{Skill Tree Framework}{}{High}{S4/S5}{Team}{Not Started}
+\backlogitem{U2.1}{As a user, I want to view a visual skill tree so that I understand how lessons are organized.}{5}{High}{S4}{}{Not Started}
+\backlogitem{U2.2}{As a user, I want to select a lesson from the skill tree so that I can begin learning that topic.}{3}{High}{S5}{}{Not Started}
+\backlogitem{U2.3}{As a user, I want future lessons to remain locked until I complete their prerequisites so that I follow the intended progression.}{5}{High}{S5}{}{Not Started}
+\backlogitem{U2.4}{As a user, I want completed lessons to be marked so that I can easily see my progress.}{3}{High}{S5}{}{Not Started}
+\backlogitem{U2.5}{As a user, I want my lesson completion to remain saved after closing the app so that I do not lose my progress.}{5}{High}{S5}{}{Not Started}
+\backlogitem{U2.6}{As a user, I want to return to previously completed lessons so that I can review material.}{2}{Medium}{S6}{}{Not Started}
+
+\backlogepic{E3}{Gym \& Fitness Skill Tree}{}{High}{S5/S6}{Team}{Not Started}
+\backlogitem{U3.1}{As a user, I want to learn the correct steps for performing the bench press so that I understand the exercise.}{3}{High}{S5}{}{Not Started}
+\backlogitem{U3.2}{As a user, I want visual examples and explanations of proper form so that I know what the movement should look like.}{3}{High}{S5}{}{Not Started}
+\backlogitem{U3.3}{As a user, I want to learn common bench press mistakes so that I know what errors to avoid.}{2}{Medium}{S5}{}{Not Started}
+\backlogitem{U3.4}{As a user, I want general starting weight and progression guidance so that I can progress through the lesson structure.}{3}{Medium}{S5}{}{Not Started}
+\backlogitem{U3.5}{As a user, I want to record the weight and repetitions I performed so that I can track my training history.}{5}{Medium}{S6}{}{Not Started}
+\backlogitem{U3.6}{As a user, I want a dashboard displaying completed lessons and progress so that I can see how I am improving.}{5}{High}{S6}{}{Not Started}
+
+\backlogepic{E4}{Pose Estimation \& AI Form Feedback}{}{High}{S3/S7}{Team}{Not Started}
+\backlogitem{T4.1}{Research and prototype a pose estimation solution capable of detecting body joints from an image or video.}{5}{High}{S3}{}{Not Started}
+\backlogitem{T4.2}{Create a basic prototype that verifies pose estimation works with a bench press movement.}{5}{High}{S4}{}{Not Started}
+\backlogitem{U4.3}{As a user, I want to record or upload a short exercise video so that the app can analyze my form.}{5}{High}{S5}{}{Not Started}
+\backlogitem{U4.4}{As a user, I want the app to identify important body joints during my exercise so that my movement can be evaluated.}{8}{High}{S6}{}{Not Started}
+\backlogitem{U4.5}{As a user, I want the app to calculate important joint positions or angles so that it can identify possible form problems.}{8}{High}{S6}{}{Not Started}
+\backlogitem{U4.6}{As a user, I want feedback explaining possible form mistakes after my video is analyzed so that I know what to improve.}{8}{High}{S6}{}{Not Started}
+\backlogitem{U4.7}{As a user, I want AI-generated explanations of my form feedback so that the recommendations are easier to understand.}{5}{Medium}{S7}{}{Not Started}
+\backlogitem{U4.8}{As a user, I want form analysis to occur while I exercise so that I can receive feedback with minimal delay.}{8}{Low}{S7}{}{Not Started}
+
+\backlogepic{E5}{Quality, Testing \& Non-Functional Requirements}{}{High}{S5/S7}{Team}{Not Started}
+\backlogitem{T5.1}{Define measurable non-functional requirements for usability, performance, reliability, and error handling.}{3}{High}{S5}{}{Not Started}
+\backlogitem{T5.2}{Create test cases for account creation, login, progress saving, skill tree unlocking, and lesson completion.}{5}{High}{S6}{}{Not Started}
+\backlogitem{T5.3}{Implement unit tests for core application logic.}{5}{High}{S6}{}{Not Started}
+\backlogitem{T5.4}{Test integration between the user interface, stored progress, gym lessons, and pose estimation system.}{5}{High}{S7}{}{Not Started}
+\backlogitem{T5.5}{Improve loading states, error messages, usability, and performance based on testing results.}{3}{Medium}{S7}{}{Not Started}
+\backlogitem{T5.6}{Fix identified bugs and refactor code that is difficult to maintain.}{5}{High}{S7}{}{Not Started}
+
+\backlogepic{E6}{Final Integration \& Semester Deliverable}{}{High}{S8}{Team}{Not Started}
+\backlogitem{T6.1}{Perform final regression testing of the complete application.}{5}{High}{S8}{}{Not Started}
+\backlogitem{T6.2}{Confirm all required high priority user stories meet their acceptance criteria.}{3}{High}{S8}{}{Not Started}
+\backlogitem{T6.3}{Create a stable demonstration build of the web application.}{5}{High}{S8}{}{Not Started}
+\backlogitem{T6.4}{Prepare the final demonstration, presentation, screenshots, and explanation of the development process.}{3}{High}{S8}{}{Not Started}
+
+\end{longtable}
+\end{singlespacing}
