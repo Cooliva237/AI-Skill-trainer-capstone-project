@@ -8,6 +8,7 @@ import {
   logout as logoutAccount,
   signup as signupAccount,
 } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import {
   createEmptyProgress,
   loadSkillProgress,
@@ -24,14 +25,6 @@ import {
   type ReactNode,
 } from "react";
 
-// Session and lesson progress live here.
-// Both are saved in localStorage so a refresh keeps them.
-// Later, replace lib/auth.ts and lib/progress.ts with Supabase.
-// These screens can stay as they are.
-//
-// localStorage is not available during the server render, so we load it
-// through useSyncExternalStore. That avoids a hydration mismatch.
-
 type Snapshot = {
   ready: boolean;
   session: Session | null;
@@ -39,9 +32,18 @@ type Snapshot = {
 };
 
 type AppContextValue = Snapshot & {
-  signup: (input: { name: string; email: string; password: string }) => AuthResult;
-  login: (input: { email: string; password: string }) => AuthResult;
-  logout: () => void;
+  signup: (input: {
+    name: string;
+    email: string;
+    password: string;
+  }) => Promise<AuthResult>;
+
+  login: (input: {
+    email: string;
+    password: string;
+  }) => Promise<AuthResult>;
+
+  logout: () => Promise<void>;
   completeLesson: (lessonId: string) => void;
   resetGymProgress: () => void;
 };
@@ -56,6 +58,7 @@ const serverSnapshot: Snapshot = {
 
 let clientSnapshot: Snapshot | null = null;
 let uiReady = false;
+
 const listeners = new Set<() => void>();
 
 function publish(next: Snapshot) {
@@ -63,8 +66,23 @@ function publish(next: Snapshot) {
   listeners.forEach((listener) => listener());
 }
 
-function loadClientSnapshot(): Snapshot {
-  const session = getSession();
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot(): Snapshot {
+  if (!uiReady) return serverSnapshot;
+  return clientSnapshot ?? serverSnapshot;
+}
+
+function getServerSnapshot(): Snapshot {
+  return serverSnapshot;
+}
+
+function createSnapshot(session: Session | null): Snapshot {
   return {
     ready: true,
     session,
@@ -74,73 +92,131 @@ function loadClientSnapshot(): Snapshot {
   };
 }
 
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+async function signup(input: {
+  name: string;
+  email: string;
+  password: string;
+}): Promise<AuthResult> {
+  const result = await signupAccount(input);
 
-function getSnapshot(): Snapshot {
-  // Stay on the server snapshot until after hydration, then show saved data.
-  if (!uiReady) return serverSnapshot;
-  return clientSnapshot ?? serverSnapshot;
-}
-
-function getServerSnapshot(): Snapshot {
-  return serverSnapshot;
-}
-
-function signup(input: { name: string; email: string; password: string }): AuthResult {
-  const result = signupAccount(input);
   if (!result.ok) return result;
 
-  const progress = createEmptyProgress(gymLessons);
-  saveSkillProgress(result.session.email, GYM_SKILL_ID, progress);
-  publish({ ready: true, session: result.session, progress });
+  publish(createSnapshot(result.session));
   return result;
 }
 
-function login(input: { email: string; password: string }): AuthResult {
-  const result = loginAccount(input);
+async function login(input: {
+  email: string;
+  password: string;
+}): Promise<AuthResult> {
+  const result = await loginAccount(input);
+
   if (!result.ok) return result;
 
-  publish({
-    ready: true,
-    session: result.session,
-    progress: loadSkillProgress(result.session.email, GYM_SKILL_ID, gymLessons),
-  });
+  publish(createSnapshot(result.session));
   return result;
 }
 
-function logout() {
-  logoutAccount();
-  publish({ ready: true, session: null, progress: emptyProgress });
+async function logout(): Promise<void> {
+  await logoutAccount();
+  publish(createSnapshot(null));
 }
 
 function completeLesson(lessonId: string) {
   const current = getSnapshot();
+
   if (!current.session) return;
 
-  const progress = markLessonComplete(current.progress, lessonId, gymLessons);
-  saveSkillProgress(current.session.email, GYM_SKILL_ID, progress);
+  const progress = markLessonComplete(
+    current.progress,
+    lessonId,
+    gymLessons
+  );
+
+  saveSkillProgress(
+    current.session.email,
+    GYM_SKILL_ID,
+    progress
+  );
+
   publish({ ...current, progress });
 }
 
 function resetGymProgress() {
   const current = getSnapshot();
+
   if (!current.session) return;
 
-  saveSkillProgress(current.session.email, GYM_SKILL_ID, emptyProgress);
+  saveSkillProgress(
+    current.session.email,
+    GYM_SKILL_ID,
+    emptyProgress
+  );
+
   publish({ ...current, progress: emptyProgress });
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-export function AppProvider({ children }: { children: ReactNode }) {
-  const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+export function AppProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const snapshot = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot
+  );
 
   useEffect(() => {
     uiReady = true;
-    publish(clientSnapshot ?? loadClientSnapshot());
+
+    let active = true;
+
+    async function initializeSession() {
+      try {
+        const session = await getSession();
+
+        if (active) {
+          publish(createSnapshot(session));
+        }
+      } catch {
+        if (active) {
+          publish(createSnapshot(null));
+        }
+      }
+    }
+
+    void initializeSession();
+
+    const { data } = supabase.auth.onAuthStateChange(
+      (_event, authSession) => {
+        if (!active) return;
+
+        if (!authSession?.user) {
+          publish(createSnapshot(null));
+          return;
+        }
+
+        const user = authSession.user;
+
+        const session: Session = {
+          name:
+            user.user_metadata?.name ||
+            user.email?.split("@")[0] ||
+            "User",
+          email: user.email || "",
+        };
+
+        publish(createSnapshot(session));
+      }
+    );
+
+    return () => {
+      active = false;
+      data.subscription.unsubscribe();
+    };
   }, []);
 
   const value: AppContextValue = {
@@ -152,13 +228,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     resetGymProgress,
   };
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      {children}
+    </AppContext.Provider>
+  );
 }
 
 export function useApp(): AppContextValue {
   const value = useContext(AppContext);
+
   if (!value) {
-    throw new Error("useApp must be used inside AppProvider");
+    throw new Error(
+      "useApp must be used inside AppProvider"
+    );
   }
+
   return value;
 }

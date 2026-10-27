@@ -6,7 +6,10 @@ export type Lesson = {
   objective: string;
   order: number;
   prerequisiteId: string | null;
-  content: string[];
+  content: {
+  heading?: string;
+  text?: string;
+}[];
   tips: string[];
   commonMistakes: string[];
 };

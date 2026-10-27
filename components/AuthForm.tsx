@@ -1,3 +1,4 @@
+
 "use client";
 
 import { RedirectIfSignedIn } from "@/components/AuthGate";
@@ -22,34 +23,65 @@ export function AuthForm({ mode }: AuthFormProps) {
 function AuthFormFields({ mode }: AuthFormProps) {
   const { login, signup } = useApp();
   const router = useRouter();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
   const isSignup = mode === "signup";
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const result = isSignup ? signup({ name, email, password }) : login({ email, password });
 
-    if (!result.ok) {
-      setError(result.message);
-      return;
+    setError(null);
+    setMessage(null);
+    setLoading(true);
+
+    try {
+      const result = isSignup
+        ? await signup({ name, email, password })
+        : await login({ email, password });
+
+      if (!result.ok) {
+        const needsConfirmation =
+          result.message.toLowerCase().includes("check your email");
+
+        if (needsConfirmation) {
+          setMessage(result.message);
+        } else {
+          setError(result.message);
+        }
+
+        return;
+      }
+
+      router.push("/dashboard");
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/dashboard");
   }
 
   return (
     <div className="mx-auto flex max-w-md flex-col px-5 py-12">
-      <h1 className="font-display text-4xl text-ink">{isSignup ? "Create account" : "Log in"}</h1>
+      <h1 className="font-display text-4xl text-ink">
+        {isSignup ? "Create account" : "Log in"}
+      </h1>
+
       <p className="mt-2 text-sm leading-6 text-muted">
         {isSignup
-          ? "Create an account to save your lessons and pick up where you left off."
-          : "Log in to continue your training."}
+          ? "Create an account to start your training journey."
+          : "Welcome back! Log in to continue your training."}
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-4 rounded-3xl border border-line bg-raised p-5">
+      <form
+        onSubmit={handleSubmit}
+        className="mt-8 space-y-4 rounded-3xl border border-line bg-raised p-5"
+      >
         {isSignup && (
           <label className="block text-sm font-semibold text-ink">
             Name
@@ -92,14 +124,39 @@ function AuthFormFields({ mode }: AuthFormProps) {
           />
         </label>
 
+        {!isSignup && (
+          <div className="text-right">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-semibold text-coral hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+        )}
+
         {error && (
-          <p className="text-sm text-coral" role="alert">
+          <p className="text-sm text-red-500" role="alert">
             {error}
           </p>
         )}
 
-        <button type="submit" className={`${primaryButton} w-full`}>
-          {isSignup ? "Create account" : "Log in"}
+        {message && (
+          <p className="text-sm text-green-600" role="status">
+            {message}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className={`${primaryButton} w-full disabled:cursor-not-allowed disabled:opacity-50`}
+        >
+          {loading
+            ? "Please wait..."
+            : isSignup
+              ? "Create account"
+              : "Log in"}
         </button>
       </form>
 
@@ -107,14 +164,20 @@ function AuthFormFields({ mode }: AuthFormProps) {
         {isSignup ? (
           <>
             Already have an account?{" "}
-            <Link href="/login" className="font-semibold text-ink hover:text-coral">
+            <Link
+              href="/login"
+              className="font-semibold text-ink hover:text-coral"
+            >
               Log in
             </Link>
           </>
         ) : (
           <>
             New here?{" "}
-            <Link href="/signup" className="font-semibold text-ink hover:text-coral">
+            <Link
+              href="/signup"
+              className="font-semibold text-ink hover:text-coral"
+            >
               Create account
             </Link>
           </>

@@ -1,127 +1,154 @@
+
+import { supabase } from "@/lib/supabase";
 import type { AuthResult, Session } from "@/types/user";
 
-const USERS_KEY = "ast-users";
-const SESSION_KEY = "ast-session";
-
-type StoredUser = {
-  name: string;
-  email: string;
-  password: string;
-};
-
-// MOCK AUTH ONLY.
-// Passwords are saved in localStorage so login can reject a wrong one.
-// Do not use this for real accounts. Replace this file with Supabase Auth later.
-// The screens should not need to change when that happens.
-
-function readUsers(): StoredUser[] {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const raw = window.localStorage.getItem(USERS_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed.filter(isStoredUser);
-  } catch {
-    return [];
-  }
+function toSession(user: {
+  email?: string;
+  user_metadata?: { name?: string };
+}): Session {
+  return {
+    name: user.user_metadata?.name || user.email?.split("@")[0] || "User",
+    email: user.email || "",
+  };
 }
 
-function writeUsers(users: StoredUser[]): void {
-  window.localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
+export async function getSession(): Promise<Session | null> {
+  const { data, error } = await supabase.auth.getUser();
 
-function isStoredUser(value: unknown): value is StoredUser {
-  if (typeof value !== "object" || value === null) return false;
-  const record = value as Record<string, unknown>;
-  return (
-    typeof record.name === "string" &&
-    typeof record.email === "string" &&
-    typeof record.password === "string"
-  );
-}
-
-function isSession(value: unknown): value is Session {
-  if (typeof value !== "object" || value === null) return false;
-  const record = value as Record<string, unknown>;
-  return typeof record.name === "string" && typeof record.email === "string";
-}
-
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
-
-export function getSession(): Session | null {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const raw = window.localStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
-    return isSession(parsed) ? parsed : null;
-  } catch {
+  if (error || !data.user) {
     return null;
   }
+
+  return toSession(data.user);
 }
 
-export function signup(input: {
+export async function signup(input: {
   name: string;
   email: string;
   password: string;
-}): AuthResult {
-  const name = input.name.trim().replace(/\s+/g, " ");
-  const email = normalizeEmail(input.email);
-  const password = input.password;
+}): Promise<AuthResult> {
+  const name = input.name.trim();
+  const email = input.email.trim().toLowerCase();
 
   if (name.length < 2) {
     return { ok: false, message: "Enter your name." };
   }
+
   if (!/^\S+@\S+\.\S+$/.test(email)) {
     return { ok: false, message: "Enter a valid email." };
   }
+
+  if (input.password.length < 6) {
+    return {
+      ok: false,
+      message: "Use at least 6 characters for the password.",
+    };
+  }
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password: input.password,
+    options: {
+      data: { name },
+    },
+  });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  if (!data.user) {
+    return { ok: false, message: "Unable to create account." };
+  }
+
+  if (!data.session) {
+    return {
+      ok: false,
+      message:
+        "Account created! Check your email to confirm your account before logging in.",
+    };
+  }
+
+  return {
+    ok: true,
+    session: toSession(data.user),
+  };
+}
+
+export async function login(input: {
+  email: string;
+  password: string;
+}): Promise<AuthResult> {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: input.email.trim().toLowerCase(),
+    password: input.password,
+  });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  if (!data.user) {
+    return { ok: false, message: "Unable to log in." };
+  }
+
+  return {
+    ok: true,
+    session: toSession(data.user),
+  };
+}
+
+export async function logout(): Promise<void> {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function forgotPassword(email: string): Promise<{
+  ok: boolean;
+  message: string;
+}> {
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    email.trim().toLowerCase(),
+    {
+      redirectTo: `${window.location.origin}/reset-password`,
+    }
+  );
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  return {
+    ok: true,
+    message:
+      "If an account exists for that email, a password reset link will be sent.",
+  };
+}
+
+export async function updatePassword(password: string): Promise<{
+  ok: boolean;
+  message: string;
+}> {
   if (password.length < 6) {
-    return { ok: false, message: "Use at least 6 characters for the password." };
+    return {
+      ok: false,
+      message: "Password must contain at least 6 characters.",
+    };
   }
 
-  const users = readUsers();
-  if (users.some((user) => user.email === email)) {
-    return { ok: false, message: "An account with that email already exists. Log in instead." };
+  const { error } = await supabase.auth.updateUser({
+    password,
+  });
+
+  if (error) {
+    return { ok: false, message: error.message };
   }
 
-  users.push({ name, email, password });
-  writeUsers(users);
-
-  const session = { name, email };
-  window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  return { ok: true, session };
-}
-
-export function login(input: { email: string; password: string }): AuthResult {
-  const email = normalizeEmail(input.email);
-  const password = input.password;
-
-  if (!/^\S+@\S+\.\S+$/.test(email)) {
-    return { ok: false, message: "Enter a valid email." };
-  }
-  if (password.length === 0) {
-    return { ok: false, message: "Enter your password." };
-  }
-
-  const user = readUsers().find((item) => item.email === email);
-  if (!user) {
-    return { ok: false, message: "No account uses that email yet." };
-  }
-  if (user.password !== password) {
-    return { ok: false, message: "That password does not match." };
-  }
-
-  const session = { name: user.name, email: user.email };
-  window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  return { ok: true, session };
-}
-
-export function logout(): void {
-  window.localStorage.removeItem(SESSION_KEY);
+  return {
+    ok: true,
+    message: "Your password has been updated successfully.",
+  };
 }
