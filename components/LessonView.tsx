@@ -1,13 +1,17 @@
+
 "use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { RequireAuth } from "@/components/AuthGate";
 import { useApp } from "@/components/AppProvider";
+import { CompletionPlates } from "@/components/CompletionPlates";
 import { primaryButton, secondaryButton } from "@/components/styles";
 import { gymLessons } from "@/data/gymLessons";
 import { getLessonById, getLessonByOrder } from "@/lib/lessons";
 import { getLessonStatus } from "@/lib/progress";
-import Link from "next/link";
-import { CompletionPlates } from "@/components/CompletionPlates";
 
 export function LessonView({ lessonId }: { lessonId: string }) {
   return (
@@ -18,52 +22,135 @@ export function LessonView({ lessonId }: { lessonId: string }) {
 }
 
 function LessonContent({ lessonId }: { lessonId: string }) {
-  const { progress, completeLesson, saving, progressReady } = useApp();
+  const router = useRouter();
+
+  const {
+    progress,
+    completeLesson,
+    saving,
+    progressReady,
+  } = useApp();
+
+  const [continuing, setContinuing] = useState(false);
+
   const lesson = getLessonById(lessonId);
 
-  if (!lesson) {
-    return <p className="px-5 py-16 text-sm text-muted">That lesson is not on this path.</p>;
+  async function handleCompleteAndContinue() {
+    if (!lesson || continuing || saving || !progressReady) {
+      return;
+    }
+
+    setContinuing(true);
+
+    try {
+      await completeLesson(lesson.id);
+
+      const nextLesson = getLessonByOrder(lesson.order + 1);
+
+      if (nextLesson) {
+        router.push(`/lesson/${nextLesson.id}`);
+      } else {
+        router.push("/practice/bench-press");
+      }
+    } finally {
+      setContinuing(false);
+    }
   }
 
-  const status = getLessonStatus(lesson, progress, gymLessons);
+  if (!lesson) {
+    return (
+      <p className="px-5 py-16 text-sm text-muted">
+        That lesson is not on this path.
+      </p>
+    );
+  }
+
+  if (!progressReady) {
+    return (
+      <p
+        className="px-5 py-16 text-muted"
+        role="status"
+      >
+        Loading your lesson progress…
+      </p>
+    );
+  }
+
+  const status = getLessonStatus(
+    lesson,
+    progress,
+    gymLessons
+  );
+
   const previous = getLessonByOrder(lesson.order - 1);
   const next = getLessonByOrder(lesson.order + 1);
-  const nextStatus = next ? getLessonStatus(next, progress, gymLessons) : "locked";
 
-  if (!progressReady) return <p className="px-5 py-16 text-muted" role="status">Loading your lesson progress…</p>;
+  const nextStatus = next
+    ? getLessonStatus(next, progress, gymLessons)
+    : "locked";
+
+  const nextDestination = next
+    ? `/lesson/${next.id}`
+    : "/practice/bench-press";
+
+  const isLastLesson = !next;
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-8">
-      <Link href="/skills/gym" className="text-sm font-semibold text-muted hover:text-ink">
+      <Link
+        href="/skills/gym"
+        className="text-sm font-semibold text-muted hover:text-ink"
+      >
         ← Skill tree
       </Link>
 
       <p className="mt-6 text-sm font-semibold uppercase tracking-[0.14em] text-coral">
         Lesson {lesson.order} of {gymLessons.length}
       </p>
-      <h1 className="mt-2 font-display text-4xl text-ink">{lesson.title}</h1>
-      <p className="mt-3 text-base leading-7 text-muted">{lesson.description}</p>
+
+      <h1 className="mt-2 font-display text-4xl text-ink">
+        {lesson.title}
+      </h1>
+
+      <p className="mt-3 text-base leading-7 text-muted">
+        {lesson.description}
+      </p>
 
       {status === "locked" ? (
         <div className="mt-8 rounded-3xl border border-line bg-raised p-6">
-          <h2 className="font-display text-2xl">This lesson is locked</h2>
+          <h2 className="font-display text-2xl">
+            This lesson is locked
+          </h2>
+
           <p className="mt-2 text-sm leading-6 text-muted">
-            Finish the earlier lessons to open this one. The skill tree shows which step is next.
+            Complete the earlier lessons to unlock this one.
           </p>
-          <Link href="/skills/gym" className={`${primaryButton} mt-5`}>
+
+          <Link
+            href="/skills/gym"
+            className={`${primaryButton} mt-5`}
+          >
             Back to skill tree
           </Link>
         </div>
       ) : (
         <div className="mt-8 space-y-5">
           <section className="rounded-3xl bg-navy px-5 py-4 text-raised">
-            <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-raised">What you&apos;ll learn</h2>
-            <p className="mt-2 text-lg leading-7">{lesson.objective}</p>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-raised">
+              What you&apos;ll learn
+            </h2>
+
+            <p className="mt-2 text-lg leading-7">
+              {lesson.objective}
+            </p>
           </section>
 
           <section className="space-y-3">
             {lesson.content.map((paragraph) => (
-              <p key={paragraph} className="text-base leading-7 text-ink">
+              <p
+                key={paragraph}
+                className="text-base leading-7 text-ink"
+              >
                 {paragraph}
               </p>
             ))}
@@ -71,10 +158,16 @@ function LessonContent({ lessonId }: { lessonId: string }) {
 
           {lesson.tips.length > 0 && (
             <section className="rounded-3xl border border-line bg-raised p-5">
-              <h2 className="font-display text-xl">Tips</h2>
+              <h2 className="font-display text-xl">
+                Tips
+              </h2>
+
               <ul className="mt-3 space-y-2 text-sm leading-6 text-ink">
                 {lesson.tips.map((tip) => (
-                  <li key={tip} className="flex gap-2">
+                  <li
+                    key={tip}
+                    className="flex gap-2"
+                  >
                     <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-coral" />
                     <span>{tip}</span>
                   </li>
@@ -85,10 +178,16 @@ function LessonContent({ lessonId }: { lessonId: string }) {
 
           {lesson.commonMistakes.length > 0 && (
             <section className="rounded-3xl border border-line bg-raised p-5">
-              <h2 className="font-display text-xl">Common mistakes</h2>
+              <h2 className="font-display text-xl">
+                Common mistakes
+              </h2>
+
               <ul className="mt-3 space-y-2 text-sm leading-6 text-ink">
                 {lesson.commonMistakes.map((mistake) => (
-                  <li key={mistake} className="flex gap-2">
+                  <li
+                    key={mistake}
+                    className="flex gap-2"
+                  >
                     <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-gold" />
                     <span>{mistake}</span>
                   </li>
@@ -97,38 +196,74 @@ function LessonContent({ lessonId }: { lessonId: string }) {
             </section>
           )}
 
-          <section className="rounded-3xl border border-line bg-sage-soft p-5">
-            <h2 className="font-display text-xl">Try bench press practice</h2>
-            <p className="mt-2 text-sm leading-6 text-muted">Explore camera-based rep counting after reviewing the setup and safety lessons. Practice is optional and does not automatically complete this lesson.</p>
-            <Link href="/practice/bench-press" className={`${secondaryButton} mt-4`}>Open practice lab</Link>
-          </section>
-
           <div className="flex flex-col-reverse gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
             {previous ? (
-              <Link href={`/lesson/${previous.id}`} className={secondaryButton}>
-                Previous
+              <Link
+                href={`/lesson/${previous.id}`}
+                className={secondaryButton}
+              >
+                ← Previous
               </Link>
             ) : (
               <span />
             )}
 
             {status === "available" ? (
-              <button type="button" disabled={saving || !progressReady} onClick={() => completeLesson(lesson.id)} className={primaryButton}>
-                {saving ? "Saving…" : "Complete lesson"}
+              <button
+                type="button"
+                disabled={
+                  saving ||
+                  continuing ||
+                  !progressReady
+                }
+                onClick={handleCompleteAndContinue}
+                className={primaryButton}
+              >
+                {saving || continuing
+                  ? "Saving…"
+                  : isLastLesson
+                    ? "Complete & Start Practice →"
+                    : "Complete & Continue →"}
               </button>
             ) : next && nextStatus !== "locked" ? (
-              <Link href={`/lesson/${next.id}`} className={primaryButton}>
-                Next lesson
+              <Link
+                href={nextDestination}
+                className={primaryButton}
+              >
+                Continue →
+              </Link>
+            ) : isLastLesson ? (
+              <Link
+                href="/practice/bench-press"
+                className={primaryButton}
+              >
+                Start Practice →
               </Link>
             ) : (
-              <Link href="/skills/gym" className={primaryButton}>
-                Back to skill tree
+              <Link
+                href="/skills/gym"
+                className={primaryButton}
+              >
+                Back to Skill Tree
               </Link>
             )}
           </div>
 
           {status === "completed" && (
-            <div className="completion-banner" role="status"><h2>Lesson complete!</h2><CompletionPlates /><p className="mt-2 text-sm text-muted">{next ? `Next up: ${next.title}. No rush—come back when you’re ready.` : "All eight lessons, done. The path stays open whenever you need a refresher."}</p></div>
+            <div
+              className="completion-banner"
+              role="status"
+            >
+              <h2>Lesson complete!</h2>
+
+              <CompletionPlates />
+
+              <p className="mt-2 text-sm text-muted">
+                {next
+                  ? `Next up: ${next.title}.`
+                  : "All lessons complete! You're ready for bench press practice."}
+              </p>
+            </div>
           )}
         </div>
       )}
