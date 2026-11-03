@@ -1,7 +1,7 @@
 "use client";
 
 import { useApp } from "@/components/AppProvider";
-import { primaryButton } from "@/components/styles";
+import { primaryButton, secondaryButton } from "@/components/styles";
 import Link from "next/link";
 
 export function LandingActions() {
@@ -28,7 +28,7 @@ export function LandingActions() {
       </Link>
       <Link
         href="/login"
-        className="inline-flex items-center justify-center rounded-full border border-white/25 px-5 py-2.5 text-sm font-semibold text-raised hover:bg-white/10"
+        className={secondaryButton}
       >
         Log in
       </Link>

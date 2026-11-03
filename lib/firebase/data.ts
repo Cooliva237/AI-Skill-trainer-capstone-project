@@ -4,13 +4,14 @@ import { gymLessons } from '@/data/gymLessons';
 import { createEmptyProgress, markLessonComplete, normalizeProgress } from '@/lib/progress';
 import type { UserProgress } from '@/types/progress';
 import type { BenchSession } from '@/lib/pose/sessions';
+import { foldBenchTopics, expandBenchLessons } from '@/data/benchCurriculum';
 
 function progressRef(uid: string) { return doc(firebaseClient().db, 'users', uid, 'progress', 'gym'); }
 export function decodeProgress(data: unknown): UserProgress {
   const value = data as Partial<UserProgress> | undefined;
   if (!value || !Array.isArray(value.completedLessonIds)) return createEmptyProgress(gymLessons);
   const ids = [...new Set(value.completedLessonIds.filter((id): id is string => typeof id === 'string'))];
-  return normalizeProgress({ completedLessonIds: ids, currentLessonId: null, skillProgressPercentage: 0 }, gymLessons);
+  return normalizeProgress({ completedLessonIds: foldBenchTopics(ids), currentLessonId: null, skillProgressPercentage: 0 }, gymLessons);
 }
 export function watchProgress(uid: string, next: (p: UserProgress) => void, error: (e: unknown) => void) {
   return onSnapshot(progressRef(uid), { includeMetadataChanges: true }, snapshot => {
@@ -26,7 +27,11 @@ export async function updateCloudProgress(uid: string, lessonId: string | null):
     const snapshot = await transaction.get(ref);
     const previous = decodeProgress(snapshot.data());
     const next = lessonId === null ? createEmptyProgress(gymLessons) : markLessonComplete(previous, lessonId, gymLessons);
-    transaction.set(ref, { ...next, updatedAt: serverTimestamp() });
+    const oldIds: unknown = snapshot.data()?.completedLessonIds;
+    const previousTopics = Array.isArray(oldIds) ? oldIds.filter((id): id is string => typeof id === 'string') : [];
+    // Keep partial legacy topic credit. Reset is deliberately the only clearing operation.
+    const completedLessonIds = lessonId === null ? [] : expandBenchLessons(next.completedLessonIds, previousTopics);
+    transaction.set(ref, { ...next, completedLessonIds, updatedAt: serverTimestamp() });
   });
 }
 export async function loadCloudSessions(uid: string): Promise<BenchSession[]> {

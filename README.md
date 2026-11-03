@@ -2,6 +2,8 @@
 
 A practice path for real-world skills. The current path is the bench press.
 
+The illustrated edition has eight lessons, cream backgrounds and colorful plate-shaped path buttons. See [redesign and upgrade notes](docs/UI_REDESIGN.md) for the lesson grouping and compatibility with existing progress. Keep your existing `.env.local` when upgrading; camera and recorded-video practice are preserved.
+
 Supports Firebase Authentication and Cloud Firestore for accounts, profiles,
 lesson progress and bench press summaries. With no configuration it runs in a
 clearly labeled local demo mode. See [the camera and Firebase setup guide](docs/CAMERA_AND_FIREBASE_SETUP.md).
@@ -38,7 +40,7 @@ npm run build
 This version adds a browser-based bench press practice lab with camera or recorded
 video input, joint overlays, full-cycle rep counting and saved summaries.
 Use **Test camera** to check camera access before loading the pose model.
-Open Gym & Fitness → Open practice lab after logging in.
+Choose Practice in the main navigation, or Camera & video practice on the learning path.
 
 Run `npm install` then `npm run dev`; the startup script prepares the pose model
 and WASM files automatically. See [the integration and testing guide](docs/BENCH_PRESS_INTEGRATION.md)

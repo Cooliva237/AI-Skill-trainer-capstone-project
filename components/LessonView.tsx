@@ -7,6 +7,7 @@ import { gymLessons } from "@/data/gymLessons";
 import { getLessonById, getLessonByOrder } from "@/lib/lessons";
 import { getLessonStatus } from "@/lib/progress";
 import Link from "next/link";
+import { CompletionPlates } from "@/components/CompletionPlates";
 
 export function LessonView({ lessonId }: { lessonId: string }) {
   return (
@@ -28,6 +29,8 @@ function LessonContent({ lessonId }: { lessonId: string }) {
   const previous = getLessonByOrder(lesson.order - 1);
   const next = getLessonByOrder(lesson.order + 1);
   const nextStatus = next ? getLessonStatus(next, progress, gymLessons) : "locked";
+
+  if (!progressReady) return <p className="px-5 py-16 text-muted" role="status">Loading your lesson progress…</p>;
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-8">
@@ -54,7 +57,7 @@ function LessonContent({ lessonId }: { lessonId: string }) {
       ) : (
         <div className="mt-8 space-y-5">
           <section className="rounded-3xl bg-navy px-5 py-4 text-raised">
-            <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-coral">Objective</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-raised">What you&apos;ll learn</h2>
             <p className="mt-2 text-lg leading-7">{lesson.objective}</p>
           </section>
 
@@ -125,7 +128,7 @@ function LessonContent({ lessonId }: { lessonId: string }) {
           </div>
 
           {status === "completed" && (
-            <p className="text-sm text-sage">Lesson complete.</p>
+            <div className="completion-banner" role="status"><h2>Lesson complete!</h2><CompletionPlates /><p className="mt-2 text-sm text-muted">{next ? `Next up: ${next.title}. No rush—come back when you’re ready.` : "All eight lessons, done. The path stays open whenever you need a refresher."}</p></div>
           )}
         </div>
       )}

@@ -1,5 +1,6 @@
 import { GYM_SKILL_ID } from "@/data/skills";
 import type { Lesson } from "@/types/lesson";
+import { benchGroups } from "@/data/benchCurriculum";
 
 type LessonDraft = Omit<Lesson, "skillId" | "order" | "prerequisiteId">;
 
@@ -239,9 +240,65 @@ const drafts: LessonDraft[] = [
   },
 ];
 
-export const gymLessons: Lesson[] = drafts.map((draft, index) => ({
+const condensed: LessonDraft[] = [
+  {
+    id: 'bench-02', title: 'Before You Lift',
+    description: 'Meet the bench press. Get the station ready before the bar moves.',
+    objective: 'Understand the movement and review the equipment and safety checks.',
+    content: [
+      'The bench press is a horizontal push. Your chest, front shoulders and triceps move the bar; your back and legs help you stay steady.',
+      'Check that the bench and rack are stable. Review the safety arms, collars and spotter setup before loading the bar. If the station is unfamiliar, ask a qualified gym staff member to help you set it up.',
+      'This eight-lesson path starts with setup, then follows the movement. Camera practice is optional. A lesson checkmark or a counted rep does not certify safe technique.',
+    ],
+    tips: ['Start with an unloaded rehearsal. There is no weight target to unlock a lesson.', 'Ask for help when you are unsure; stop if something hurts.'],
+    commonMistakes: ['Loading the bar before checking the station.', 'Treating the camera tracker as a replacement for a coach or spotter.'],
+  },
+  {
+    id: 'bench-04', title: 'The Setup',
+    description: 'Bench position, planted feet and a steady upper back.',
+    objective: 'Rehearse your starting position before touching the bar.',
+    content: [
+      'Lie down with your eyes roughly under the bar. The unrack should be a short movement, not a reach behind your head. Sit up and adjust the bench if the position feels off.',
+      'Plant your feet and keep your head, shoulders and hips supported by the bench. Set your shoulder blades before the unrack so your upper back provides a steady base.',
+      'Rehearse with empty hands first. If you need to shift around, do it now rather than while supporting the bar.',
+    ],
+    tips: ['Take a moment to set up the same way each time.', 'You can revisit this lesson whenever the starting position feels unfamiliar.'],
+    commonMistakes: ['Reaching too far back to unrack.', 'Letting the bench move or lifting the hips to force a repetition.'],
+  },
+  { ...drafts[4], title: 'Find Your Grip' },
+  { ...drafts[5], title: 'The Unrack' },
+  { ...drafts[6], title: 'The Descent' },
+  { ...drafts[7], title: 'Press & Lockout' },
+  {
+    id: 'bench-10', title: 'Make the Next Set Better',
+    description: 'Spot a problem, revisit the right step, and keep progression gradual.',
+    objective: 'Choose one thing to review before changing the load.',
+    content: [
+      'An uneven grip, loose shoulders or a rushed descent can make a set feel different. Pick one issue to review instead of trying to change every part of the movement at once.',
+      'If the lower feels rushed, revisit The Descent. If the bar starts in an awkward position, return to The Setup and The Unrack. A coach or spotter can help you check what the camera cannot judge.',
+      'Do not add weight to fix an uneven set. Keep practice repeatable and record what you used. Increase gradually only when you are comfortable with the movement; the app does not prescribe a load.',
+    ],
+    tips: ['One clear note is more useful than five new cues.', 'Progress can mean a more consistent setup, not more weight.'],
+    commonMistakes: ['Copying someone else’s load.', 'Ignoring a messy repetition because the rep counter increased.'],
+  },
+  {
+    id: 'bench-12', title: 'Your Practice Check',
+    description: 'Put the sequence together and decide what to revisit.',
+    objective: 'Review the setup-to-rack sequence and understand the practice tools.',
+    content: [
+      'Review the station first, then your position and grip. Rehearse the unrack, controlled descent, press and return to the rack. This is a review, not a strength test.',
+      'In the practice lab, you can test your camera, track a live side view, or choose a recorded video from your device. Keep the selected shoulder, elbow, wrist and hip in view. Videos are analyzed on your device, not uploaded to Firebase.',
+      'The tracker estimates repetitions; it does not assess every part of your form. If tracking drops out or counts incorrectly, do not change your movement just to earn a rep. You can stop, check the camera, and try again without weight.',
+      'Completing this lesson finishes the learning path. Every lesson stays open for review, and practice remains available. Your saved session summaries are separate from lesson completion.',
+    ],
+    tips: ['Use the camera test before starting tracking.', 'Write down one thing you want to remember next time.'],
+    commonMistakes: ['Treating completion as proof of safe lifting.', 'Rushing a practice set to satisfy the counter.'],
+  },
+];
+
+export const gymLessons: Lesson[] = condensed.map((draft, index) => ({
   ...draft,
   skillId: GYM_SKILL_ID,
   order: index + 1,
-  prerequisiteId: index === 0 ? null : drafts[index - 1].id,
+  prerequisiteId: index === 0 ? null : benchGroups[index - 1].id,
 }));

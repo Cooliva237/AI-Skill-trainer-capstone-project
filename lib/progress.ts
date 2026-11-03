@@ -1,5 +1,6 @@
 import type { Lesson } from "@/types/lesson";
 import type { LessonStatus, UserProgress } from "@/types/progress";
+import { foldBenchTopics, expandBenchLessons } from "@/data/benchCurriculum";
 
 type ProgressFile = {
   bySkill: Record<string, UserProgress>;
@@ -61,7 +62,7 @@ function writeProgressFile(email: string, file: ProgressFile): void {
 // Stored percentage can go stale if we add lessons later, so we do not trust it.
 export function normalizeProgress(progress: UserProgress, lessons: Lesson[]): UserProgress {
   const known = new Set(lessons.map((lesson) => lesson.id));
-  const completedLessonIds = progress.completedLessonIds.filter((id) => known.has(id));
+  const completedLessonIds = [...new Set(progress.completedLessonIds.filter((id) => known.has(id)))];
   const completed = new Set(completedLessonIds);
   const current = lessons.find((lesson) => !completed.has(lesson.id));
 
@@ -84,7 +85,7 @@ export function loadSkillProgress(
 ): UserProgress {
   const stored = readProgressFile(email).bySkill[skillId];
   if (!stored) return createEmptyProgress(lessons);
-  return normalizeProgress(stored, lessons);
+  return normalizeProgress(skillId === 'gym' ? { ...stored, completedLessonIds: foldBenchTopics(stored.completedLessonIds) } : stored, lessons);
 }
 
 export function saveSkillProgress(
@@ -93,7 +94,10 @@ export function saveSkillProgress(
   progress: UserProgress,
 ): void {
   const file = readProgressFile(email);
-  file.bySkill[skillId] = progress;
+  file.bySkill[skillId] = skillId === 'gym' ? {
+    ...progress,
+    completedLessonIds: progress.completedLessonIds.length === 0 ? [] : expandBenchLessons(progress.completedLessonIds, file.bySkill[skillId]?.completedLessonIds),
+  } : progress;
   writeProgressFile(email, file);
 }
 

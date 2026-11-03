@@ -6,6 +6,7 @@ import { primaryButton } from "@/components/styles";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { TrainingBuddy } from "@/components/TrainingBuddy";
 
 type AuthFormProps = {
   mode: "login" | "signup";
@@ -46,7 +47,8 @@ function AuthFormFields({ mode }: AuthFormProps) {
 
   return (
     <div className="mx-auto flex max-w-md flex-col px-5 py-12">
-      <h1 className="font-display text-4xl text-ink">{isSignup ? "Create account" : "Log in"}</h1>
+      <div className="mb-5 flex justify-center"><TrainingBuddy /></div>
+      <h1 className="font-display text-4xl text-ink">{isSignup ? "Let’s start small." : "Good to see you."}</h1>
       <p className="mt-2 text-sm leading-6 text-muted">
         {isSignup
           ? "Create an account to save your lessons and pick up where you left off."
@@ -97,7 +99,7 @@ function AuthFormFields({ mode }: AuthFormProps) {
         </label>
 
         {error && (
-          <p className="text-sm text-coral" role="alert">
+          <p className="text-sm text-red-700" role="alert">
             {error}
           </p>
         )}

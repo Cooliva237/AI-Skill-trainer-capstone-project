@@ -8,14 +8,14 @@ export function ProgressBar({ value, label = "Skill progress" }: ProgressBarProp
 
   return (
     <div
-      className="h-2.5 w-full overflow-hidden rounded-full bg-sand"
+      className="h-4 w-full overflow-hidden rounded-full bg-sand"
       role="progressbar"
       aria-valuenow={safe}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-label={label}
     >
-      <div className="h-full rounded-full bg-coral transition-[width]" style={{ width: `${safe}%` }} />
+      <div className="h-full rounded-full bg-[#e9b82c] transition-[width]" style={{ width: `${safe}%` }} />
     </div>
   );
 }
