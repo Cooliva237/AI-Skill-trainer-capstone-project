@@ -1,4 +1,3 @@
-
 "use client";
 
 import { RequireAuth } from "@/components/AuthGate";
@@ -18,99 +17,58 @@ export function LessonView({ lessonId }: { lessonId: string }) {
 }
 
 function LessonContent({ lessonId }: { lessonId: string }) {
-  const { progress, completeLesson } = useApp();
+  const { progress, completeLesson, saving, progressReady } = useApp();
   const lesson = getLessonById(lessonId);
 
   if (!lesson) {
-    return (
-      <p className="px-5 py-16 text-sm text-muted">
-        That lesson is not on this path.
-      </p>
-    );
+    return <p className="px-5 py-16 text-sm text-muted">That lesson is not on this path.</p>;
   }
 
   const status = getLessonStatus(lesson, progress, gymLessons);
   const previous = getLessonByOrder(lesson.order - 1);
   const next = getLessonByOrder(lesson.order + 1);
-  const nextStatus = next
-    ? getLessonStatus(next, progress, gymLessons)
-    : "locked";
+  const nextStatus = next ? getLessonStatus(next, progress, gymLessons) : "locked";
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-8">
-      <Link
-        href="/skills/gym"
-        className="text-sm font-semibold text-muted hover:text-ink"
-      >
+      <Link href="/skills/gym" className="text-sm font-semibold text-muted hover:text-ink">
         ← Skill tree
       </Link>
 
       <p className="mt-6 text-sm font-semibold uppercase tracking-[0.14em] text-coral">
         Lesson {lesson.order} of {gymLessons.length}
       </p>
-
-      <h1 className="mt-2 font-display text-4xl text-ink">
-        {lesson.title}
-      </h1>
-
-      <p className="mt-3 text-base leading-7 text-muted">
-        {lesson.description}
-      </p>
+      <h1 className="mt-2 font-display text-4xl text-ink">{lesson.title}</h1>
+      <p className="mt-3 text-base leading-7 text-muted">{lesson.description}</p>
 
       {status === "locked" ? (
         <div className="mt-8 rounded-3xl border border-line bg-raised p-6">
-          <h2 className="font-display text-2xl">
-            This lesson is locked
-          </h2>
-
+          <h2 className="font-display text-2xl">This lesson is locked</h2>
           <p className="mt-2 text-sm leading-6 text-muted">
-            Finish the earlier lessons to open this one. The skill
-            tree shows which step is next.
+            Finish the earlier lessons to open this one. The skill tree shows which step is next.
           </p>
-
-          <Link
-            href="/skills/gym"
-            className={`${primaryButton} mt-5`}
-          >
+          <Link href="/skills/gym" className={`${primaryButton} mt-5`}>
             Back to skill tree
           </Link>
         </div>
       ) : (
         <div className="mt-8 space-y-5">
           <section className="rounded-3xl bg-navy px-5 py-4 text-raised">
-            <h2 className="text-base font-bold uppercase tracking-[0.14em] text-coral">
-              Objective
-            </h2>
-
-            <p className="mt-2 text-lg leading-7">
-              {lesson.objective}
-            </p>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-coral">Objective</h2>
+            <p className="mt-2 text-lg leading-7">{lesson.objective}</p>
           </section>
 
           <section className="space-y-3">
-            {lesson.content.map((item, index) => (
-              <div key={index}>
-                {item.heading && (
-                  <h2 className="mt-6 text-xl font-bold leading-7 text-ink">
-                    {item.heading}
-                  </h2>
-                )}
-
-                {item.text && (
-                  <p className="mt-2 text-base leading-7 text-ink">
-                    {item.text}
-                  </p>
-                )}
-              </div>
+            {lesson.content.map((paragraph) => (
+              <p key={paragraph} className="text-base leading-7 text-ink">
+                {paragraph}
+              </p>
             ))}
           </section>
 
           {lesson.tips.length > 0 && (
             <section className="rounded-3xl border border-line bg-raised p-5">
-              <h2 className="font-display text-2xl font-bold">
-                Tips
-              </h2>
-
+              <h2 className="font-display text-xl">Tips</h2>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-ink">
                 {lesson.tips.map((tip) => (
                   <li key={tip} className="flex gap-2">
@@ -124,10 +82,7 @@ function LessonContent({ lessonId }: { lessonId: string }) {
 
           {lesson.commonMistakes.length > 0 && (
             <section className="rounded-3xl border border-line bg-raised p-5">
-              <h2 className="font-display text-2xl font-bold">
-                Common mistakes
-              </h2>
-
+              <h2 className="font-display text-xl">Common mistakes</h2>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-ink">
                 {lesson.commonMistakes.map((mistake) => (
                   <li key={mistake} className="flex gap-2">
@@ -139,12 +94,15 @@ function LessonContent({ lessonId }: { lessonId: string }) {
             </section>
           )}
 
+          <section className="rounded-3xl border border-line bg-sage-soft p-5">
+            <h2 className="font-display text-xl">Try bench press practice</h2>
+            <p className="mt-2 text-sm leading-6 text-muted">Explore camera-based rep counting after reviewing the setup and safety lessons. Practice is optional and does not automatically complete this lesson.</p>
+            <Link href="/practice/bench-press" className={`${secondaryButton} mt-4`}>Open practice lab</Link>
+          </section>
+
           <div className="flex flex-col-reverse gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
             {previous ? (
-              <Link
-                href={`/lesson/${previous.id}`}
-                className={secondaryButton}
-              >
+              <Link href={`/lesson/${previous.id}`} className={secondaryButton}>
                 Previous
               </Link>
             ) : (
@@ -152,18 +110,11 @@ function LessonContent({ lessonId }: { lessonId: string }) {
             )}
 
             {status === "available" ? (
-              <button
-                type="button"
-                onClick={() => completeLesson(lesson.id)}
-                className={primaryButton}
-              >
-                Complete lesson
+              <button type="button" disabled={saving || !progressReady} onClick={() => completeLesson(lesson.id)} className={primaryButton}>
+                {saving ? "Saving…" : "Complete lesson"}
               </button>
             ) : next && nextStatus !== "locked" ? (
-              <Link
-                href={`/lesson/${next.id}`}
-                className={primaryButton}
-              >
+              <Link href={`/lesson/${next.id}`} className={primaryButton}>
                 Next lesson
               </Link>
             ) : (
@@ -174,9 +125,7 @@ function LessonContent({ lessonId }: { lessonId: string }) {
           </div>
 
           {status === "completed" && (
-            <p className="text-sm text-sage">
-              Lesson complete.
-            </p>
+            <p className="text-sm text-sage">Lesson complete.</p>
           )}
         </div>
       )}

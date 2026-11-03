@@ -18,7 +18,7 @@ export default function ProgressPage() {
 }
 
 function ProgressContent() {
-  const { session, progress, resetGymProgress } = useApp();
+  const { session, progress, resetGymProgress, saving, progressReady } = useApp();
   const current = progress.currentLessonId ? getLessonById(progress.currentLessonId) : undefined;
   const recentIds = [...progress.completedLessonIds].reverse().slice(0, 3);
 
@@ -115,7 +115,7 @@ function ProgressContent() {
       <button
         type="button"
         onClick={handleReset}
-        disabled={progress.completedLessonIds.length === 0}
+        disabled={saving || !progressReady || progress.completedLessonIds.length === 0}
         className={`${secondaryButton} mt-10`}
       >
         Reset Gym progress

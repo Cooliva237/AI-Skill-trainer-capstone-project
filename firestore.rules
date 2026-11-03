@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    function knownLessons() {
+      return ['bench-01','bench-02','bench-03','bench-04','bench-05','bench-06',
+              'bench-07','bench-08','bench-09','bench-10','bench-11','bench-12'];
+    }
+    match /users/{uid} {
+      allow read, delete: if owner(uid);
+      allow create, update: if owner(uid)
+        && request.resource.data.keys().hasAll(['name','email','updatedAt'])
+        && request.resource.data.keys().hasOnly(['name','email','updatedAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 100
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.updatedAt == request.time;
+
+      match /progress/{skillId} {
+        allow read: if owner(uid) && skillId == 'gym';
+        allow create, update: if owner(uid) && skillId == 'gym'
+          && request.resource.data.keys().hasAll(['completedLessonIds','currentLessonId','skillProgressPercentage','updatedAt'])
+          && request.resource.data.keys().hasOnly(['completedLessonIds','currentLessonId','skillProgressPercentage','updatedAt'])
+          && request.resource.data.completedLessonIds is list
+          && request.resource.data.completedLessonIds.size() <= 12
+          && request.resource.data.completedLessonIds.hasOnly(knownLessons())
+          && request.resource.data.completedLessonIds.toSet().size() == request.resource.data.completedLessonIds.size()
+          && (request.resource.data.currentLessonId == null || request.resource.data.currentLessonId in knownLessons())
+          && request.resource.data.skillProgressPercentage is int
+          && request.resource.data.skillProgressPercentage >= 0
+          && request.resource.data.skillProgressPercentage <= 100
+          && request.resource.data.updatedAt == request.time;
+      }
+      match /benchSessions/{sessionId} {
+        allow read, delete: if owner(uid);
+        allow create, update: if owner(uid)
+          && request.resource.data.keys().hasAll(['id','exercise','date','reps','seconds','side','source','updatedAt'])
+          && request.resource.data.keys().hasOnly(['id','exercise','date','reps','seconds','side','source','updatedAt'])
+          && request.resource.data.id == sessionId
+          && request.resource.data.exercise == 'bench-press'
+          && request.resource.data.date is string && request.resource.data.date.size() <= 40
+          && request.resource.data.reps is int && request.resource.data.reps > 0 && request.resource.data.reps <= 10000
+          && request.resource.data.seconds is int && request.resource.data.seconds >= 0 && request.resource.data.seconds <= 86400
+          && request.resource.data.side in ['left','right']
+          && request.resource.data.source in ['camera','video']
+          && request.resource.data.updatedAt == request.time;
+      }
+    }
+  }
+}

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { secondaryButton } from "@/components/styles";
 import { RequireAuth } from "@/components/AuthGate";
 import { useApp } from "@/components/AppProvider";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -35,6 +37,11 @@ function GymSkillContent() {
         <ProgressBar value={progress.skillProgressPercentage} label="Bench press progress" />
       </div>
 
+      <section className="mt-6 rounded-3xl border border-line bg-sage-soft p-5">
+        <h2 className="font-display text-2xl">Put the movement into practice</h2>
+        <p className="mt-2 text-sm leading-6 text-muted">Try the bench press camera tracker or analyze a recorded side-view clip.</p>
+        <Link href="/practice/bench-press" className={`${secondaryButton} mt-4`}>Open practice lab</Link>
+      </section>
       <div className="mt-8">
         <SkillTree />
       </div>

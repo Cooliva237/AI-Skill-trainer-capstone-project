@@ -1,4 +1,5 @@
 export type Session = {
+  uid?: string;
   name: string;
   email: string;
 };

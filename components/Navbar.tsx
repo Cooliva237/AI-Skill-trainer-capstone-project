@@ -70,9 +70,8 @@ export function Navbar() {
   const router = useRouter();
   const { ready, session, logout } = useApp();
 
-  function handleLogout() {
-    logout();
-    router.push("/");
+  async function handleLogout() {
+    if (await logout()) router.push("/");
   }
 
   return (

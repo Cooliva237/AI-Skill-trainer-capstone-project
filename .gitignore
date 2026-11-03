@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+.firebase/
+firestore-debug.log
+ui-debug.log
 
 # vercel
 .vercel
@@ -54,3 +58,6 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+# Generated pose runtime and model; restored by npm run setup:pose
+/public/pose/
