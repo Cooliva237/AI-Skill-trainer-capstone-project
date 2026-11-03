@@ -44,7 +44,6 @@ function Trainer({ email, uid, cloud }: { email: string; uid?: string; cloud: bo
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const [history, setHistory] = useState<BenchSession[]>([]);
-  const [acknowledged, setAcknowledged] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const busy = mode === 'loading' || mode === 'running' || mode === 'preview';
 
@@ -78,7 +77,7 @@ function Trainer({ email, uid, cloud }: { email: string; uid?: string; cloud: bo
   }, [email, uid, cloud, finish, release]);
 
   async function start(cameraOnly = false) {
-    if (busy || active.current || (!cameraOnly && !acknowledged) || (source === 'video' && !file)) return;
+    if (busy || active.current || (source === 'video' && !file)) return;
     if (!window.isSecureContext || !crypto.randomUUID) {
       setError('Open this app at http://localhost:3000 on this Chromebook, or use an HTTPS website. Camera practice cannot start from an insecure network address.');
       return;
@@ -219,12 +218,9 @@ function Trainer({ email, uid, cloud }: { email: string; uid?: string; cloud: bo
             <label className="mt-4 block text-sm font-semibold">Video source<select value={source} disabled={busy || mode === 'finished'} onChange={e => setSource(e.target.value as 'camera' | 'video')} className="mt-2 block w-full rounded-xl border border-line bg-paper p-3"><option value="camera">Camera</option><option value="video">Recorded video</option></select></label>
             {source === 'video' && <label className="mt-3 block text-sm">Choose a side-view clip<input type="file" accept="video/mp4,video/webm,video/quicktime" disabled={busy || mode === 'finished'} onChange={e => setFile(e.target.files?.[0] ?? null)} className="mt-2 block w-full text-sm" /></label>}
             <label className="mt-4 block text-sm font-semibold">Arm nearest the camera<select value={side} disabled={busy || mode === 'finished'} onChange={e => setSide(e.target.value as Side)} className="mt-2 block w-full rounded-xl border border-line bg-paper p-3"><option value="left">My left arm</option><option value="right">My right arm</option></select></label>
-            <p className="mt-2 text-xs leading-5 text-muted">Use your body’s left or right, not the screen’s. The preview is not mirrored.</p>
-            <label className="mt-4 flex gap-3 text-sm leading-5"><input type="checkbox" checked={acknowledged} disabled={busy} onChange={e => setAcknowledged(e.target.checked)} className="mt-1" />I have a clear side view and a safe practice setup. I understand this is experimental movement feedback.</label>
             <div className="mt-5 flex flex-wrap gap-2">
-              {mode === 'preview' ? <button className={secondaryButton} onClick={() => { release(); setHasPreview(false); setMode('idle'); setView(newCounter()); }}>Stop camera test</button> : busy ? <button className={secondaryButton} onClick={finish}>{mode === 'loading' ? 'Cancel' : 'Finish session'}</button> : mode === 'finished' ? <><button className={primaryButton} disabled={saving || saved || view.reps < 1} onClick={save}>{saving ? 'Saving…' : saved ? (cloud ? 'Saved to Firebase' : 'Saved on this device') : 'Save practice'}</button><button disabled={saving} className={secondaryButton} onClick={() => { counter.current = newCounter(); setView(counter.current); setElapsed(0); setMode('idle'); setSaved(false); setError(''); }}>New session</button></> : <><button className={primaryButton} disabled={!acknowledged || (source === 'video' && !file)} onClick={() => start()}>Start practice</button>{source === 'camera' && <button className={secondaryButton} onClick={() => start(true)}>Test camera</button>}</>}
+              {mode === 'preview' ? <button className={secondaryButton} onClick={() => { release(); setHasPreview(false); setMode('idle'); setView(newCounter()); }}>Stop camera test</button> : busy ? <button className={secondaryButton} onClick={finish}>{mode === 'loading' ? 'Cancel' : 'Finish session'}</button> : mode === 'finished' ? <><button className={primaryButton} disabled={saving || saved || view.reps < 1} onClick={save}>{saving ? 'Saving…' : saved ? (cloud ? 'Saved to Firebase' : 'Saved on this device') : 'Save practice'}</button><button disabled={saving} className={secondaryButton} onClick={() => { counter.current = newCounter(); setView(counter.current); setElapsed(0); setMode('idle'); setSaved(false); setError(''); }}>New session</button></> : <><button className={primaryButton} disabled={source === 'video' && !file} onClick={() => start()}>Start practice</button>{source === 'camera' && <button className={secondaryButton} onClick={() => start(true)}>Test camera</button>}</>}
             </div>
-            <p className="mt-3 text-xs leading-5 text-muted">Video stays on your device. Only a summary is saved when you choose Save practice.</p>
           </div>
           {error && <p role="alert" className="rounded-2xl border border-coral bg-raised p-4 text-sm">{error}</p>}
         </section>
